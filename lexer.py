@@ -1,107 +1,74 @@
+# -!- coding: utf-8 -!-
+reserve_words = ['char','class','else','extends','if','int','new','print','return','this','void','main']
+boundary = ['(',')','{','}',"'",".",';',","]
+operator = ['+','*','<','<=','>','>=','!=','==','-','=',"!"]
+wordlist = []
 
+#å¦‚æœæ ‡è¯†ç¬¦ è¿”å›ç¼–å·0
+#å¦‚æœæ•°å­— è¿”å›ç¼–å·1
+#å¦‚æœå…¶å®ƒ è¿”å›ç¼–å·2
 
-"""
-´Ê·¨·ÖÎöÆ÷
-Ê×ÏÈ¶¨ÒåÖÖ±ğÂë
-µÚÒ»Àà£º±êÊ¶·û£¨identifier£©,ÖÖ±ğÂë£º0£¬ÊôĞÔÖµÎª×ÖÃæÖµ letter(letter|digit)*
-µÚ¶şÀà£º³£Êı£¨constant£©£¬ÖÖ±ğÂë£º1£¬ÊôĞÔÖµÎª×ÖÃæÖµ [+-]?(digit)+
-µÚÈıÀà£º±£Áô×Ö£¬ÖÖ±ğÂë£º2£¬ÊôĞÔÖµÎª×ÖÃæÖµ
-µÚËÄÀà£º½ç·û£¬ÖÖ±ğÂë£º3£¬ÊôĞÔÖµÎª×ÖÃæÖµ
-µÚÎåÀà£ºÔËËã·û£¬ÖÖ±ğÂë£º4£¬ÊôĞÔÖµ×ÖÃæÖµ
-
-±£Áô×Ö£º
-break case char const class continue double else extends float for
-goto if int long new print return short sizeof static struct switch this
-void while
-½ç·û£º
-'/*','//','(',')','{','}','[',']',''','"'
-ÔËËã·û£º
-'+','*','<','<=','>','>=','!=','=='
-
-´óÖÂ¹¦ÄÜ£º
-1.´ò¿ªÔ´ÎÄ¼ş£¬¶ÁÈ¡ÎÄ¼şÄÚÈİ£¬Ö±µ½Óöµ½ÎÄ¼ş½áÊø·û
-2.½øĞĞÔ¤´¦Àí£¬È¥³ı×¢ÊÍ£¬ÒÔ¼°Ó°Ïì³ÌĞòÖ´ĞĞµÄ·ûºÅÈç»»ĞĞ·û¡¢»Ø³µ·û¡¢ÖÆ±í·ûµÈ£¬²»ÒªÈ¥³ı¿Õ¸ñ
-3.´ÓÍ·µ½Î²¶ÔÔ´ÎÄ¼ş½øĞĞÉ¨Ãè£¬³É¹¦Ê¶±ğµ¥´ÊÖ®ºó¼ÓÈçlist£¬Ê§°ÜÔò·µ»Ø´íÎó
-"""
-
-
-"""
-20201023
-ÎÊÌâ£º
-1.»¹Ã»µ÷ÊÔ
-2.Ã»ÓĞ¼ì²é½ç·ûÓëÔËËã·ûÊÇ·ñ¶¼ÆëÈ«ÁË
-3.ÊÇ·ñÍê³ÉooĞÎÊ½µÄ´Ê·¨·ÖÎöÆ÷
-4.·µ»ØµÄ³£Êıtoken²¢²»´ø·ûºÅ
-"""
-import re
-
-reserve_words = ['break','case','char','const','class','continue','double','else','extendes','float','for','goto','if','int','long','new','print','return','short','sizeof','static','struct','switch','this','void','while']
-boundary = ['//','(',')','{','}','[',']','\'','"',';']
-operator = ['+','*','<','<=','>','>=','!=','==','||','&&','|','&']
-
-
-
-def scanner(str = ' ',p = 0):
-    zimianzhi = ''
-    while(p<len(str)):
-        while str[p] is ' ':
+def scanner(line,p = 0):
+    line = line+" " #é˜²æ­¢æº¢å‡º
+    while p<len(line)-1:
+        while line[p] == ' ':
             p += 1
         start = p
-        if str[p].isalpha():
-            while (str[p].isalnum()):
+        if line[p].isalpha() or line[p] == '_':
+            if line[p] == '_':
                 p += 1
-            zimianzhi = str[start:p]
-            if (zimianzhi in reserve_words):
-                list.append((2,zimianzhi))
-            else:
-                list.append((0,zimianzhi))
-        elif str[p].isdigit():
-            while(str[p].isdigit()):
+            while line[p].isalnum():
                 p += 1
-            zimianzhi = str[start:p]
-            list.append((1,zimianzhi))
-        elif str[p] in boundary:
-            if str[p] is '\/' and str[p+1] is '\/':
-                p += 2
-                list.append(3,'\/\/')
+            tempstr = line[start:p]
+            if tempstr in reserve_words:
+                wordlist.append([2, tempstr])
             else:
-                list.append(3,str[p])
+                wordlist.append([0, tempstr])
+        #æ•°å­—
+        elif line[p].isdigit():
+            if line[p]=='0' and line[p+1].isdigit():
+                print("è¯æ³•åˆ†æå‡ºé”™")
+                raise Exception
+            while line[p].isdigit():
                 p += 1
-        elif str[p] in operator:
-            if str[p] is '>' and str[p+1] is '=':
+            tempstr = line[start:p]
+            wordlist.append([1, int(tempstr)])
+        elif line[p] in boundary:
+            wordlist.append([2, line[p]])
+            p += 1
+        elif line[p] in operator:
+            if line[p] == '>' and line[p+1] == '=':
                 p += 2
-                list.append(4,'>=')
-            elif str[p] is '<' and str[p+1] is '=':
+                wordlist.append([2,'>='])
+            elif line[p] == '<' and line[p+1] == '=':
                 p += 2
-                list.append(4,'<=')
-            elif str[p] is '=' and str[p+1] is '=':
+                wordlist.append([2,'<='])
+            elif line[p] == '=' and line[p+1] == '=':
                 p += 2
-                list.append(4,'==')
-            elif str[p] is '!' and str[p+1] is '=':
+                wordlist.append([2,'=='])
+            elif line[p] == '!' and line[p+1] == '=':
                 p += 2
-                list.append(4,'!=')
-            elif str[p] is '|' and str[p+1] is '|':
-                p += 2
-                list.append(4,'!|')
-            elif str[p] is '&' and str[p+1] is '&':
-                p += 2
-                list.append(4,'&&')
+                wordlist.append([2,'!='])
+            elif line[p] == '!' and line[p+1] != '=':
+                print("è¯æ³•åˆ†æå‡ºé”™")
+                raise Exception
             else:
-                list.append(4,str[p])
+                wordlist.append([2, line[p]])
                 p += 1
         else:
+            print("è¯æ³•åˆ†æå‡ºé”™")
             raise Exception
     return
 
 def lex(source):
-    list = []
     with open(source) as f:
         for line in f:
-            i,j = re.search(r'\/\/',line)
-            i = i if i>0 else 0
-            line_nocomment = line[i:].lstrip()
-            scanner(line_nocomment)
-    return list
+            scanner(line)
+
+def lex_test(source):
+    scanner(source)
+
+
 
 
 
