@@ -42,7 +42,7 @@ class Stack(object):
                 if ind == 3:
                     return i + " 是<复合语句>内定义的变量"
                 elif ind == 2:
-                    return i + " 是<函数定义>内定义的参数"
+                    return i + " 是<函数定义>内定义的变量"
                 elif ind == 1:
                     return i + " 是<类声明>内定义的变量"
                 else:
@@ -108,8 +108,11 @@ class class_structure:
             return False
 
     def check_func(self,fuc_name):
+        global class_pool
         if fuc_name in self.func_pool:
             return True
+        if self.parentName is not None:
+            return class_pool[self.parentName].check_func(fuc_name)
         else:
             return False
 
@@ -154,6 +157,7 @@ def value_parameter(wordlist,ind):
             ind = expression(wordlist, ind)
             post_name += 1
     retract_layer -= 4
+    # ind += 2
     return ind,post_name
 
 
@@ -183,7 +187,8 @@ def call_func(wordlist, ind):
                 check_str = "变量" + wordlist[ind][1] + "存在,函数" + wordlist[ind + 2][1] + "不存在or不符合要求"
         cls_analysis.append(check_str)
 
-        ind += 1
+        ind += 2
+
     retract_layer -= 4
     return ind
 
@@ -355,7 +360,7 @@ def write_statement(wordlist, ind):
     retract_layer += 4
     ind = expression(wordlist, ind)
     retract_layer -= 4
-    ind += 1
+    ind += 2
     return ind
 
 # 返回语句
@@ -368,6 +373,7 @@ def return_statement(wordlist, ind):
         ind += 1
         ind = expression(wordlist, ind)
         ind += 1
+    ind += 1
     retract_layer -= 4
     return ind
 
@@ -380,6 +386,7 @@ def assign_statement(wordlist, ind):
     ind += 2
     ind = expression(wordlist, ind)
     retract_layer -= 4
+    ind += 1
     return ind
 
 
@@ -423,6 +430,7 @@ def define_cls_variable(wordlist, ind):
         cls_analysis.append(check_str)
 
         ind += 2
+
         if ind+3 >= len(wordlist)-1:
             break
     retract_layer -= 4
@@ -517,7 +525,7 @@ def func_define(wordlist,ind,class_var_pool):
         # 参数
         ind, parameter_list, post_name = parameter(wordlist, ind)
         ind += 2
-        new_name = name + "_" + post_name
+        new_name = name + "_" + str(post_name)
         local_var_pool = {}
         for [par_name, par_kind] in parameter_list:
             local_var_pool[par_name] = par_kind
@@ -646,11 +654,8 @@ def grammar(wordlist):
         print("语法分析出错")
         raise Exception
 
-    print("----------------------语义检查--------------------")
-    print("\n".join(var_analysis))
-    print("\n".join(cls_analysis))
+
 
 if __name__ =="__main__":
-    lex = lexer.lex_test("int a = 1,b = 2,c = 3;char a1 = 'a',_b = '2',_c = 'c';int a4 = 1,b4 = 2,c4 = 3;class temp{int b=1;}void main{temp a = new a();"
-                         "print(a+b);return;}")
+    lex = lexer.lex_test("int ab=10;class a{void bb(){print(1+2);}}class b extends a{void c(){print(1+2);}}void main{b t = new b(); t.bb();ab=20;return;}")
     grammar(lexer.wordlist)
