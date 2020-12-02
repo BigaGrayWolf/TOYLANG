@@ -39,11 +39,11 @@ class Stack(object):
     def reverse_query(self,i):
         for ind, j in enumerate(self.items[::-1]):
             if i in j:
-                if ind == 3:
+                if ind == 0:
                     return i + " 是<复合语句>内定义的变量"
-                elif ind == 2:
-                    return i + " 是<函数定义>内定义的变量"
                 elif ind == 1:
+                    return i + " 是<函数定义>内定义的变量"
+                elif ind == 2:
                     return i + " 是<类声明>内定义的变量"
                 else:
                     return i + " 是<程序>内定义的变量"
@@ -68,6 +68,18 @@ class_pool = {}
 var_analysis = []
 # 类语义分析
 cls_analysis = []
+
+
+def print_analysis():
+    global var_analysis
+    global cls_analysis
+    print("\n"*3)
+    print("----------普通变量（非类对象）相关分析-----------")
+    print("\n".join(var_analysis))
+    print("\n" * 3)
+    print("----------类对象相关分析-----------")
+    print("\n".join(cls_analysis))
+
 
 # 类里的函数体
 class func_structure:
@@ -173,19 +185,27 @@ def call_func(wordlist, ind):
     if wordlist[ind][0] == 0 and wordlist[ind+1][1] == "." and wordlist[ind+2][0] == 0:
         print("-"*retract_layer + "<标识符>")
         print("-"*retract_layer + "<标识符>")
+
+        class_name = wordlist[ind][1]
+        variable_name = wordlist[ind+2][1]
+
         ind += 4
-        ind, post_name = value_parameter(wordlist,ind)
+        ind, post_name = value_parameter(wordlist, ind)
 
         #  检查变量是否存在
-        kind = cls_var_stack.reverse_find_kind_by_name(wordlist[ind][1])
+        kind = cls_var_stack.reverse_find_kind_by_name(class_name)
         if kind is None:
             check_str = wordlist[ind][1] + "该变量不存在"
         else:
-            if class_pool[kind].check_func(wordlist[ind + 2][1] + "_" + str(post_name)):
-                check_str = "变量" + wordlist[ind][1] + "函数" + wordlist[ind + 2][1] + "存在且符合要求"
+            if class_pool[kind].check_func(variable_name + "_" + str(post_name)):
+                check_str = "变量" + class_name + ",函数" + variable_name + "存在且符合要求"
             else:
-                check_str = "变量" + wordlist[ind][1] + "存在,函数" + wordlist[ind + 2][1] + "不存在or不符合要求"
+                check_str = "变量" + class_name + "存在,函数" + variable_name + "不存在or不符合要求"
         cls_analysis.append(check_str)
+
+
+
+
 
         ind += 2
 
@@ -447,11 +467,12 @@ def compound_statement(wordlist,ind):
     print("-"*retract_layer + "<复合语句>")
     retract_layer += 4
     class_var_pool = {}
+    var_pool = {}
     if wordlist[ind][1] == "int" or wordlist[ind][1] == "char":
         # 变量定义
         ind, var_pool = define_variable(wordlist,ind)  # 这里多了一个var_pool可以检查变量
 
-        var_local_stack.push(var_pool)  # 函数内定义
+    var_local_stack.push(var_pool)  # 函数内定义
     if wordlist[ind][0] == 0 and wordlist[ind+1][0] == 0 and wordlist[ind+2][1] == "=" and wordlist[ind+3][1] == "new":
         # 类定义
         ind, class_var_pool = define_cls_variable(wordlist, ind)#class_var_pool={name:kind}
@@ -461,9 +482,7 @@ def compound_statement(wordlist,ind):
     while wordlist[ind][1] != "}":#复合语句未结束
         ind = statement(wordlist, ind)
 
-    if var_local_stack.size()==3:
-        var_local_stack.pop()  # 把函数内部定义的变量给去除了
-
+    var_local_stack.pop()  # 把函数内部定义的变量给去除了
     cls_var_stack.pop()
     retract_layer -= 4
     # 结束时 ind--》"}"
@@ -632,8 +651,7 @@ def grammar(wordlist):
     global global_var_pool
     global class_pool
     global var_local_stack
-    global var_analysis
-    global cls_analysis
+
     ind = 0
     # 变量定义
     if wordlist[ind][1] == 'int' or wordlist[ind][1] == 'char':
@@ -654,8 +672,8 @@ def grammar(wordlist):
         print("语法分析出错")
         raise Exception
 
-
+    print_analysis()
 
 if __name__ =="__main__":
-    lex = lexer.lex_test("int ab=10;class a{void bb(){print(1+2);}}class b extends a{void c(){print(1+2);}}void main{b t = new b(); t.bb();ab=20;return;}")
+    lex = lexer.lex_test("int ab=10;class a{void bb(){print(ab+2);}}class b extends a{void c(){print(1+2);}}void main{b t = new b(); t.bb();ab=20;return;}")
     grammar(lexer.wordlist)
